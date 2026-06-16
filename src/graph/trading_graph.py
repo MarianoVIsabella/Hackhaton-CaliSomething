@@ -31,6 +31,8 @@ from src.tools.broker import BrokerTool
 from src.tools.journal import TradeJournal
 from src.tools.market_data import MarketDataTool
 from src.tools.news_tool import NewsTool
+from src.agent.judge_agent import JudgeAgent
+from src.tools.feedback_memory import FeedbackMemory
 
 
 load_dotenv()
@@ -51,6 +53,12 @@ class TradingState(TypedDict, total=False):
     risk_check: dict[str, Any]
     order_result: dict[str, Any]
     journal_entry: dict[str, Any]
+    positions: list[dict[str, Any]]
+    current_position: dict[str, Any]
+    positions: list[dict[str, Any]]
+    # current_position: dict[str, Any]
+    pre_judge_decision: dict[str, Any]
+    feedback_context: dict[str, list[str]]
 
     errors: list[str]
 
@@ -77,6 +85,8 @@ class TradingGraph:
         self.news_tool = NewsTool()
         self.llm_reasoner = LLMReasoningAgent()
         self.journal = TradeJournal()
+        self.judge_agent = JudgeAgent()
+        self.feedback_memory = FeedbackMemory()
 
         self.graph = self._build_graph()
 
@@ -87,9 +97,50 @@ class TradingGraph:
 
     def get_account_node(self, state: TradingState) -> TradingState:
         account_summary = self.broker.get_account_summary()
+        positions = self.broker.get_positions()
+
+        symbol = state["symbol"]
+
+        current_position = next(
+            (
+                position
+                for position in positions
+                if position.get("symbol") == symbol
+            ),
+            {
+                "symbol": symbol,
+                "quantity": 0,
+                "market_value": 0,
+                "unrealized_pl": 0,
+                "unrealized_plpc": 0,
+            },
+        )
+
         state["account_summary"] = account_summary
-        if account_summary.get("error"):
-            self._append_error(state, account_summary.get("message", "Account tool failed."))
+        state["positions"] = positions
+        state["current_position"] = current_position
+
+        return state
+    
+    def read_feedback_node(self, state):
+        state["feedback_context"] = self.feedback_memory.read_latest_summary(limit=10)
+        return state
+    
+    def judge_decision_node(self, state: TradingState) -> TradingState:
+        proposed_decision = state["decision"]
+
+        reviewed_decision = self.judge_agent.review(
+            symbol=state["symbol"],
+            price_snapshot=state.get("price_snapshot", {}),
+            news_signal=state.get("news_signal", {}),
+            account_summary=state.get("account_summary", {}),
+            current_position=state.get("current_position", {}),
+            proposed_decision=proposed_decision,
+        )
+
+        state["pre_judge_decision"] = proposed_decision
+        state["decision"] = reviewed_decision
+
         return state
 
     def get_market_data_node(self, state: TradingState) -> TradingState:
@@ -122,6 +173,8 @@ class TradingGraph:
             price_snapshot=state.get("price_snapshot", {}),
             news_signal=state.get("news_signal", {}),
             account_summary=state.get("account_summary", {}),
+            current_position=state.get("current_position", {}),
+            feedback_context=state.get("feedback_context", {})
         )
 
         # Optional hackathon demo mode: only for Alpaca paper trading. It allows
@@ -149,7 +202,7 @@ class TradingGraph:
                     + str(decision.get("rationale", ""))
                 ),
             }
-
+        
         state["decision"] = decision
         return state
 
@@ -276,12 +329,16 @@ class TradingGraph:
         builder.add_node("risk_check", self.risk_check_node)
         builder.add_node("execute_order", self.execute_order_node)
         builder.add_node("write_journal", self.journal_node)
+        builder.add_node("judge_decision", self.judge_decision_node)
+        builder.add_node("read_feedback", self.read_feedback_node)
 
         builder.set_entry_point("get_account")
         builder.add_edge("get_account", "get_market_data")
         builder.add_edge("get_market_data", "get_news")
-        builder.add_edge("get_news", "llm_reasoning")
-        builder.add_edge("llm_reasoning", "risk_check")
+        builder.add_edge("get_news", "read_feedback")
+        builder.add_edge("read_feedback", "llm_reasoning")
+        builder.add_edge("llm_reasoning", "judge_decision")
+        builder.add_edge("judge_decision", "risk_check")
         builder.add_edge("risk_check", "execute_order")
         builder.add_edge("execute_order", "write_journal")
         builder.add_edge("write_journal", END)

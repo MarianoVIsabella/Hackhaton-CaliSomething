@@ -74,6 +74,8 @@ class LLMReasoningAgent:
         price_snapshot: dict[str, Any],
         news_signal: dict[str, Any],
         account_summary: dict[str, Any],
+        current_position: dict[str, Any],
+        feedback_context: dict[str, list[str]]
     ) -> dict[str, Any]:
         """Return a BUY/SELL/HOLD/SKIP decision as a validated dictionary."""
         prompt = {
@@ -86,8 +88,11 @@ class LLMReasoningAgent:
                 "Use only tool-provided data below.",
                 "Never invent prices, news, account values, or positions.",
                 "If price data is missing, contradictory, or weak, choose HOLD or SKIP.",
-                "A BUY/SELL decision requires clear alignment between price trend and news signal.",
-                "Prefer HOLD when uncertainty is high.",
+                "BUY when price trend is up AND news signal is positive.",
+                "SELL when price trend is down AND news signal is negative.",
+                "SELL when price trend is down AND the account already holds this symbol, even if news is neutral.",
+                "HOLD when price trend and news signal conflict.",
+                "SKIP only when required tool data is missing or invalid.",
             ],
             "symbol": symbol,
             "price_snapshot": price_snapshot,
