@@ -1,0 +1,12 @@
+alpaca-py
+openai
+python-dotenv
+requests
+pandas
+pydantic
+yfinance
+rich
+loguru
+langgraph
+langchain
+langchain-openai
