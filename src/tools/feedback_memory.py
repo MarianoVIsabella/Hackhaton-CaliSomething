@@ -92,16 +92,7 @@ class FeedbackMemory:
         }
 
     def extract_action_policy(self, feedback_context: dict[str, Any]) -> dict[str, Any]:
-        """
-        Convert natural-language feedback into simple enforceable rules.
-
-        Examples it understands:
-        - "Do not buy if news confidence is below 0.7"
-        - "Sell all oil and gas positions"
-        - "Exit energy stocks because of an oil crisis"
-        - "Use smaller quantity"
-        - "Do not trade this cycle"
-        """
+       
         policy = self._empty_policy()
 
         all_items: list[str] = []

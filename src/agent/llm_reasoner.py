@@ -25,7 +25,7 @@ class LLMReasoningAgent:
 
     def __init__(self) -> None:
         self.provider = os.getenv("LLM_PROVIDER", "openai").lower().strip()
-        self.model = os.getenv("LLM_MODEL", "deepseek-v4-pro").strip()
+        self.model = os.getenv("MODEL_NAME", "deepseek-v4-pro").strip()
 
         if self.provider == "groq":
             api_key = os.getenv("GROQ_API_KEY")
@@ -77,7 +77,8 @@ class LLMReasoningAgent:
         news_signal: dict[str, Any],
         account_summary: dict[str, Any],
         current_position: dict[str, Any],
-        feedback_context: dict[str, list[str]]
+        feedback_context: dict[str, list[str]],
+        all_positions: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Return a BUY/SELL/HOLD/SKIP decision as a validated dictionary."""
         prompt = {
@@ -103,6 +104,7 @@ class LLMReasoningAgent:
             "account_summary": account_summary,
             "current_position": current_position,
             "feedback_context": feedback_context,
+            "all_positions": all_positions or [],
             "feedback_instructions": [
                 "You must explicitly consider feedback_context before deciding.",
                 "Short-term missions directly constrain the current/next decision.",
@@ -124,6 +126,7 @@ class LLMReasoningAgent:
             response = self.client.chat.completions.create(
                 model=self.model,
                 temperature=0.1,
+                max_completion_tokens=300,
                 messages=[
                     {
                         "role": "system",

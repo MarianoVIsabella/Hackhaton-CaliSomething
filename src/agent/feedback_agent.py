@@ -26,14 +26,7 @@ class FeedbackAgent:
         self.output_path.touch(exist_ok=True)
 
     def classify_feedback(self, feedback: str) -> dict[str, list[str]]:
-        """
-        Rule-based feedback classifier.
-
-        Short-term missions are actionable instructions that should affect the
-        next decision immediately. Long-term missions are strategic preferences
-        that should influence future behavior. Everything else becomes general
-        feedback.
-        """
+       
         feedback = feedback.strip()
 
         result = {
@@ -55,14 +48,14 @@ class FeedbackAgent:
             "do not buy", "don't buy", "do not sell", "don't sell",
             "use smaller quantity", "max", "maximum", "limit", "only",
             "check price", "check news", "confidence below", "news confidence",
-            "oil", "gas", "energy crisis", "crisis", "market shock",
+            "oil", "gas", "energy crisis", "crisis", "market shock",  "portfolio",
             "position", "positions",
         ]
 
         # Longer-term strategy or behavior change.
         long_term_keywords = [
             "over time", "long term", "strategy", "recurring", "learn",
-            "adapt", "risk management", "diversification", "portfolio",
+            "adapt", "risk management", "diversification",
             "memory", "improve future", "historical", "performance",
             "in the future", "going forward", "overall", "always prefer",
             "usually", "trend over days", "weekly",
