@@ -1,11 +1,3 @@
-"""
-news_tool.py
-
-Financial news retrieval tool.
-
-This tool uses Alpaca News API first. If news retrieval fails, it returns a
-safe error object instead of crashing the trading agent.
-"""
 
 from __future__ import annotations
 

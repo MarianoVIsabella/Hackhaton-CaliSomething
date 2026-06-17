@@ -1,17 +1,3 @@
-"""
-feedback_memory.py
-
-Persistent feedback memory for the trading graph.
-
-The FeedbackAgent writes classified user feedback to logs/user_feedback.jsonl.
-This module reads that feedback and converts it into a compact context object
-that the Trader/Judge agents and deterministic policy node can use.
-
-Important design:
-- Feedback collection alone is not enough.
-- Feedback must be converted into an enforceable policy.
-- The graph must log whether feedback was applied, ignored, or not applicable.
-"""
 
 from __future__ import annotations
 

@@ -1,11 +1,3 @@
-"""
-market_data.py
-
-Market data wrapper for the trading agent.
-
-This module retrieves real market prices from Alpaca Market Data.
-The agent must never invent prices; every price must come from this tool.
-"""
 
 from __future__ import annotations
 

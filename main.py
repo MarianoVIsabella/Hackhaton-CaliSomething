@@ -1,7 +1,4 @@
 """
-main.py
-
-LangGraph autonomous trading agent runner for the hackathon demo.
 
 The agent runs independently for a fixed duration and repeatedly executes this
 explicit graph:

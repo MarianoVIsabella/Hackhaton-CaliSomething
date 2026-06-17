@@ -1,12 +1,4 @@
-"""
-trading_agent.py
 
-Compatibility wrapper around the LangGraph implementation.
-
-The project has been converted to LangGraph. New code should use
-src.graph.trading_graph.TradingGraph directly. This wrapper keeps the previous
-TradingAgent interface working for quick tests.
-"""
 
 from __future__ import annotations
 
