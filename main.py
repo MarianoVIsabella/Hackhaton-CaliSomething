@@ -5,7 +5,7 @@ LangGraph autonomous trading agent runner for the hackathon demo.
 
 The agent runs independently for a fixed duration and repeatedly executes this
 explicit graph:
-get_account -> get_market_data -> get_news -> llm_reasoning -> risk_check -> execute_order -> write_journal
+get_account -> get_market_data -> get_news -> read_feedback -> llm_reasoning -> judge_decision -> apply_feedback_policy -> risk_check -> execute_order -> write_journal
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ def run_autonomous_demo(
     print(f"Mode: {'PAPER TRADING' if execute_orders else 'DRY RUN'}")
     print(f"Demo trade mode: {demo_trade_mode}")
     print("Graph flow:")
-    print("get_account -> get_market_data -> get_news -> llm_reasoning -> risk_check -> execute_order -> write_journal")
+    print("get_account -> get_market_data -> get_news -> read_feedback -> llm_reasoning -> judge_decision -> apply_feedback_policy -> risk_check -> execute_order -> write_journal")
     print("====================================\n")
 
     while time.time() < end_time:
@@ -71,6 +71,8 @@ def run_autonomous_demo(
                 news_signal = final_state.get("news_signal", {})
                 risk = final_state.get("risk_check", {})
                 order = final_state.get("order_result", {})
+                feedback_context = final_state.get("feedback_context", {})
+                feedback_effects = final_state.get("feedback_effects", [])
 
                 if execute_orders:
                     print("⚠ PAPER TRADING ENABLED (orders may be sent to Alpaca Paper Account)")
@@ -82,6 +84,12 @@ def run_autonomous_demo(
                 print("Decision source:", decision.get("decision_source"))
                 print("Confidence:", decision.get("confidence"))
                 print("News signal:", news_signal)
+                print("Feedback missions:", {
+                    "short_term": feedback_context.get("short_term_missions", []),
+                    "long_term": feedback_context.get("long_term_missions", []),
+                    "general": feedback_context.get("general_feedback", []),
+                })
+                print("Feedback effects:", feedback_effects)
                 print("Rationale:", decision.get("rationale"))
                 print("Risk:", risk.get("reason"))
                 print("Order:", order)

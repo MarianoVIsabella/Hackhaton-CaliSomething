@@ -8,7 +8,7 @@ This agent waits for user feedback, classifies it into:
 2. long_term_missions
 3. general_feedback
 
-Then stores the result as structured JSON.
+Then stores the result as structured JSONL so the trading graph can read it.
 """
 
 from __future__ import annotations
@@ -29,10 +29,11 @@ class FeedbackAgent:
         """
         Rule-based feedback classifier.
 
-        This is intentionally lightweight and reliable for hackathon use.
-        Later it can be upgraded with an LLM classifier.
+        Short-term missions are actionable instructions that should affect the
+        next decision immediately. Long-term missions are strategic preferences
+        that should influence future behavior. Everything else becomes general
+        feedback.
         """
-
         feedback = feedback.strip()
 
         result = {
@@ -44,50 +45,33 @@ class FeedbackAgent:
         if not feedback:
             return result
 
-        lower_feedback = feedback.lower()
+        lower = feedback.lower()
 
+        # Immediate trading instructions.
         short_term_keywords = [
-            "next decision",
-            "next trade",
-            "immediately",
-            "now",
-            "today",
-            "this cycle",
-            "increase confidence",
-            "reduce confidence",
-            "buy less",
-            "sell",
-            "hold",
-            "avoid",
-            "use smaller quantity",
-            "check price",
-            "check news",
-            "do not trade",
+            "next decision", "next trade", "immediately", "now", "today",
+            "this cycle", "buy", "sell", "hold", "skip", "avoid", "exit",
+            "reduce", "close", "liquidate", "do not trade", "don't trade",
+            "do not buy", "don't buy", "do not sell", "don't sell",
+            "use smaller quantity", "max", "maximum", "limit", "only",
+            "check price", "check news", "confidence below", "news confidence",
+            "oil", "gas", "energy crisis", "crisis", "market shock",
+            "position", "positions",
         ]
 
+        # Longer-term strategy or behavior change.
         long_term_keywords = [
-            "over time",
-            "long term",
-            "strategy",
-            "recurring",
-            "learn",
-            "adapt",
-            "risk management",
-            "diversification",
-            "portfolio",
-            "trend",
-            "memory",
-            "improve future",
-            "historical",
-            "performance",
+            "over time", "long term", "strategy", "recurring", "learn",
+            "adapt", "risk management", "diversification", "portfolio",
+            "memory", "improve future", "historical", "performance",
+            "in the future", "going forward", "overall", "always prefer",
+            "usually", "trend over days", "weekly",
         ]
 
-        if any(keyword in lower_feedback for keyword in short_term_keywords):
+        if any(k in lower for k in short_term_keywords):
             result["short_term_missions"].append(feedback)
-
-        elif any(keyword in lower_feedback for keyword in long_term_keywords):
+        elif any(k in lower for k in long_term_keywords):
             result["long_term_missions"].append(feedback)
-
         else:
             result["general_feedback"].append(feedback)
 
@@ -98,10 +82,6 @@ class FeedbackAgent:
         raw_feedback: str,
         classified_feedback: dict[str, list[str]],
     ) -> dict[str, Any]:
-        """
-        Save feedback classification to JSONL.
-        """
-
         entry = {
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
             "raw_feedback": raw_feedback,
@@ -114,19 +94,10 @@ class FeedbackAgent:
         return entry
 
     def process_feedback(self, feedback: str) -> dict[str, Any]:
-        """
-        Classify and save one feedback item.
-        """
-
         classified = self.classify_feedback(feedback)
         return self.save_feedback(feedback, classified)
 
     def run_interactive(self) -> None:
-        """
-        Wait for user input continuously.
-        Type 'exit' to stop.
-        """
-
         print("\n=== Feedback Agent Started ===")
         print("Type feedback about the trading agent.")
         print("Type 'exit' to stop.\n")
