@@ -1,17 +1,3 @@
-"""
-broker.py
-
-Alpaca Paper Trading broker wrapper.
-
-This module handles:
-- Connecting to Alpaca Paper Trading
-- Reading account state
-- Reading open positions
-- Submitting market orders
-- Handling broker/API errors safely
-
-No real money is used when paper=True.
-"""
 
 from __future__ import annotations
 

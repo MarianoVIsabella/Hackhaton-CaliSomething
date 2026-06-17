@@ -1,11 +1,3 @@
-"""
-journal.py
-
-Structured trade journal for the autonomous trading agent.
-
-Every decision must be logged, including HOLD decisions and failures.
-This supports traceability, explainability, and hackathon evaluation.
-"""
 
 from __future__ import annotations
 

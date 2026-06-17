@@ -1,12 +1,3 @@
-"""
-llm_reasoner.py
-
-LLM-based reasoning node helper for the LangGraph trading agent.
-
-The LLM may reason only from tool-provided data. It must never invent prices,
-news, account balances, or portfolio state. If evidence is missing or weak, it
-must choose HOLD/SKIP.
-"""
 
 from __future__ import annotations
 

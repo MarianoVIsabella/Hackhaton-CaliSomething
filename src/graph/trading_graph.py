@@ -1,22 +1,3 @@
-"""
-trading_graph.py
-
-Complete LangGraph implementation of the hackathon trading agent.
-
-Graph flow:
-START
-  -> get_account
-  -> get_market_data
-  -> get_news
-  -> llm_reasoning
-  -> risk_check
-  -> execute_order
-  -> write_journal
-  -> END
-
-Each node updates a shared TradingState. This makes the perception -> reasoning
--> action -> journal loop explicit, inspectable, and demo-friendly.
-"""
 
 from __future__ import annotations
 

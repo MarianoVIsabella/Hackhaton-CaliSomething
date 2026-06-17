@@ -1,11 +1,4 @@
-"""
-judge_agent.py
 
-Judge Agent for reviewing trading decisions.
-
-The Judge Agent checks whether the trading agent's decision should be accepted
-or changed before risk checking and execution.
-"""
 
 from __future__ import annotations
 
