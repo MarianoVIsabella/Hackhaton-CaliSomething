@@ -36,7 +36,7 @@ def extract_json_object(text: str) -> dict[str, Any]:
 class JudgeAgent:
     def __init__(self) -> None:
         self.provider = os.getenv("LLM_PROVIDER", "openai").lower()
-        self.model = os.getenv("LLM_MODEL", "deepseek-v4-pro").strip()
+        self.model = os.getenv("MODEL_NAME", "deepseek-v4-pro").strip()
 
         if self.provider == "groq":
             api_key = os.getenv("GROQ_API_KEY")
@@ -71,6 +71,7 @@ class JudgeAgent:
         current_position: dict[str, Any],
         proposed_decision: dict[str, Any],
         feedback_context: dict[str, Any] | None = None,
+        all_positions: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """
         Review the proposed trading decision.
@@ -80,7 +81,7 @@ class JudgeAgent:
 
         prompt = {
             "instruction": (
-                "You are a strict trading judge agent in an educational paper-trading system. "
+                "You are a strict trading judge agent. "
                 "Your job is to review the proposed trading decision before risk checking. "
                 "Use only the provided tool data. Never invent prices, news, positions, or account data. "
                 "You may ACCEPT the proposed decision or CHANGE it. "
@@ -97,8 +98,11 @@ class JudgeAgent:
             "current_position": current_position,
             "proposed_decision": proposed_decision,
             "feedback_context": feedback_context or {},
+            "all_positions":all_positions or [],
             "feedback_review_rules": [
-                "Short-term missions from feedback_context must be enforced on the current decision.",
+                "Short-term missions, long-term missions and general feedback from feedback_context must be enforced on the current decision.",
+                "DON'T PREFER SHORT TERM MISSIONS OVER LONG TERM MISSIONS OR VICE VERSA. JUST ENFORCE ALL RELEVANT MISSIONS AS APPLICABLE.",
+                "If there is a contraddiction between missions/feedback, prefer the most recent mission/feedback.",
                 "If feedback_context.policy.force_hold is true, change the action to HOLD.",
                 "If feedback_context.policy.block_buy is true, reject BUY and change to HOLD.",
                 "If feedback_context.policy.block_sell is true, reject SELL and change to HOLD.",
@@ -126,6 +130,7 @@ class JudgeAgent:
             response = self.client.chat.completions.create(
                 model=self.model,
                 temperature=0.0,
+                max_completion_tokens=300,
                 response_format={"type": "json_object"},
                 messages=[
                     {

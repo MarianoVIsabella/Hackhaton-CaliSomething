@@ -73,6 +73,7 @@ class TradingState(TypedDict, total=False):
     feedback_context: dict[str, Any]
     feedback_policy: dict[str, Any]
     feedback_effects: list[str]
+    # all_positions: list[dict[str, Any]]
 
     errors: list[str]
 
@@ -150,12 +151,7 @@ class TradingGraph:
         return state
 
     def judge_decision_node(self, state: TradingState) -> TradingState:
-        """Review the LLM decision.
-
-        The Judge may accept or change the LLM decision. Feedback policy is not
-        enforced here; it is enforced by the next deterministic node so that
-        user instructions work even if the Judge ignores them or the LLM fails.
-        """
+      
         proposed_decision = state["decision"]
 
         reviewed_decision = self.judge_agent.review(
@@ -166,6 +162,7 @@ class TradingGraph:
             current_position=state.get("current_position", {}),
             proposed_decision=proposed_decision,
             feedback_context=state.get("feedback_context", {}),
+            all_positions=state.get("positions", []),
         )
 
         state["pre_judge_decision"] = proposed_decision
@@ -204,7 +201,8 @@ class TradingGraph:
             news_signal=state.get("news_signal", {}),
             account_summary=state.get("account_summary", {}),
             current_position=state.get("current_position", {}),
-            feedback_context=state.get("feedback_context", {})
+            feedback_context=state.get("feedback_context", {}),
+            all_positions=state.get("positions", []),
         )
 
         # Optional hackathon demo mode: only for Alpaca paper trading. It allows
@@ -260,13 +258,7 @@ class TradingGraph:
         return False, f"{symbol} sector is '{sector}', not targeted by feedback"
 
     def apply_feedback_policy_node(self, state: TradingState) -> TradingState:
-        """Apply clear user feedback as enforceable policy.
-
-        This node fixes the previous missing concept:
-        - LLM/Judge may see feedback but ignore it.
-        - This deterministic node enforces direct feedback.
-        - It also logs when feedback was considered but not applicable.
-        """
+       
         decision = state.get("decision", {"action": "HOLD", "confidence": 0.0})
         policy = state.get("feedback_policy") or (state.get("feedback_context", {}) or {}).get("policy", {}) or {}
         effects = state.setdefault("feedback_effects", [])
